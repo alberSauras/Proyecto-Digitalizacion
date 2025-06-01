@@ -43,3 +43,30 @@ app.delete('/notas/:id', (req, res) => {
 
 app.listen(3000, () => console.log('API funcionando en puerto 3000'));
 
+const { Client } = require('pg');
+const express = require('express');
+app.use(express.json());
+
+const client = new Client({
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false } // Necesario para Render
+});
+
+client.connect();
+
+// Obtener todas las notas desde la base de datos
+app.get('/notas', async (req, res) => {
+    const result = await client.query('SELECT * FROM notas');
+    res.json(result.rows);
+});
+
+// Crear una nueva nota en la base de datos
+app.post('/notas', async (req, res) => {
+    const { titulo, contenido } = req.body;
+    await client.query('INSERT INTO notas (titulo, contenido) VALUES ($1, $2)', [titulo, contenido]);
+    res.status(201).json({ mensaje: "Nota guardada" });
+});
+
+app.listen(3000, () => console.log('API conectada a la base de datos'));
+
+
